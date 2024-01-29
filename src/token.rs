@@ -5,8 +5,6 @@ use crate::{casing::Casing, SEPARATOR};
 #[derive(Debug)]
 pub struct Token(String);
 
-const RESOLVE_LOWERCASE_AS: Casing = Casing::CamelCase;
-
 impl Token {
     pub fn to_case(&self, casing: &Casing) -> Option<String> {
         match casing {
@@ -128,7 +126,7 @@ impl Token {
 
     pub fn to_lower_case(&self) -> Option<String> {
         if self.0.contains(SEPARATOR) {
-            return self.to_case(&RESOLVE_LOWERCASE_AS);
+            return None;
         } else {
             Some(self.0.clone())
         }

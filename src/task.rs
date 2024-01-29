@@ -1,4 +1,7 @@
-use std::io::Read;
+use std::{
+    fs::File,
+    io::{Read, Seek, SeekFrom, Write},
+};
 
 use crate::{casing::Casing, record::Record, token::Token};
 
@@ -6,23 +9,24 @@ use crate::{casing::Casing, record::Record, token::Token};
 pub struct Task {
     candidate: Token,
     rename_to: Token,
-    buf: String,
+    file: File,
 }
 
 impl Task {
-    pub fn new(mut input: impl Read, candidate: &str, rename_to: &str) -> Self {
-        let mut buf = String::new();
-        let _ = input.read_to_string(&mut buf);
-
+    pub fn new(file: File, candidate: &str, rename_to: &str) -> Self {
         Self {
             candidate: candidate.parse().unwrap(),
             rename_to: rename_to.parse().unwrap(),
-            buf,
+            file,
         }
     }
 
-    pub fn generate_records(&self) -> Vec<Record> {
+    pub fn generate_records(&mut self) -> Vec<Record> {
         let mut records = vec![];
+
+        let mut buf = String::new();
+        let _ = self.file.read_to_string(&mut buf);
+        let _ = self.file.seek(SeekFrom::Start(0));
 
         let casings: Vec<_> = vec![
             Casing::LowerCase,
@@ -43,7 +47,7 @@ impl Task {
 
             let token_to_match = token_to_match.as_ref().unwrap();
 
-            let res: Vec<_> = self.buf.match_indices(token_to_match).collect();
+            let res: Vec<_> = buf.match_indices(token_to_match).collect();
             for item in res.iter() {
                 records.push(Record {
                     pos: item.0,
@@ -57,8 +61,13 @@ impl Task {
     }
 
     pub fn process_records(&mut self, records: &mut [Record]) {
+        let mut buf = String::new();
+        let _ = self.file.read_to_string(&mut buf);
+
         // sort to make the offset work
         records.sort_by(|a, b| a.pos.cmp(&b.pos));
+
+        dbg!(&records);
 
         let mut offset = 0;
 
@@ -73,11 +82,17 @@ impl Task {
             let start = record.pos + offset;
             let end = record.pos + record.len + offset;
 
-            self.buf.replace_range(start..end, &rename_to);
+            buf.replace_range(start..end, &rename_to);
 
             offset += rename_to.len() - record.len;
         }
 
-        println!("{}", &self.buf);
+        println!("{}", &buf);
+
+        self.file.set_len(0).unwrap();
+        self.file.rewind().unwrap();
+        self.file
+            .write_all(buf.as_bytes())
+            .expect("Failed to write");
     }
 }

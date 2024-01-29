@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 
 use clap::Parser;
 
@@ -17,7 +17,11 @@ pub fn run() -> Result<(), clap::Error> {
     let cli = Cli::parse();
     dbg!(&cli);
 
-    let file = File::open(cli.file).unwrap();
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(cli.file)
+        .unwrap();
 
     let mut task = Task::new(file, &cli.candidate, &cli.rename_to);
 
