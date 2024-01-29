@@ -1,8 +1,39 @@
-use crate::SEPARATOR;
+use std::str::FromStr;
 
+use crate::{casing::Casing, SEPARATOR};
+
+#[derive(Debug)]
 pub struct Token(String);
 
+const RESOLVE_LOWERCASE_AS: Casing = Casing::CamelCase;
+
 impl Token {
+    pub fn to_case(&self, casing: &Casing) -> Option<String> {
+        match casing {
+            Casing::CamelCase => self.to_camel_case(),
+            Casing::PascalCase => self.to_pascal_case(),
+            Casing::LowerCase => self.to_lower_case(),
+            Casing::KebabCase => todo!(),
+            Casing::SnakeCase => self.to_snake_case(),
+            Casing::UpperCase => todo!(),
+            Casing::UpperSnakeCase => todo!(),
+            Casing::UpperKebabCase => todo!(),
+        }
+    }
+
+    pub fn from_casing(casing: &Casing, input: &str) -> Option<Self> {
+        match casing {
+            Casing::CamelCase => Token::from_camel_case(input),
+            Casing::PascalCase => Token::from_pascal_case(input),
+            Casing::LowerCase => Some(Token(input.into())),
+            Casing::KebabCase => todo!(),
+            Casing::SnakeCase => Token::from_snake_case(input),
+            Casing::UpperCase => todo!(),
+            Casing::UpperSnakeCase => todo!(),
+            Casing::UpperKebabCase => todo!(),
+        }
+    }
+
     pub fn from_camel_case(input: &str) -> Option<Self> {
         let mut result = String::new();
 
@@ -48,38 +79,70 @@ impl Token {
         Some(Token(result))
     }
 
-    pub fn to_camel_case(&self) -> String {
-        self.0
-            .split(SEPARATOR)
-            .enumerate()
-            .map(|(i, part)| {
-                if i == 0 {
-                    part.to_string()
-                } else {
+    pub fn to_camel_case(&self) -> Option<String> {
+        if !self.0.contains(SEPARATOR) {
+            return None;
+        }
+
+        Some(
+            self.0
+                .split(SEPARATOR)
+                .enumerate()
+                .map(|(i, part)| {
+                    if i == 0 {
+                        part.to_string()
+                    } else {
+                        part.to_string()
+                            .char_indices()
+                            .map(|(i, ch)| if i == 0 { ch.to_ascii_uppercase() } else { ch })
+                            .collect()
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(""),
+        )
+    }
+
+    pub fn to_snake_case(&self) -> Option<String> {
+        if !self.0.contains(SEPARATOR) {
+            return None;
+        }
+
+        Some(self.0.replace(&String::from(SEPARATOR), "_"))
+    }
+
+    pub fn to_pascal_case(&self) -> Option<String> {
+        Some(
+            self.0
+                .split(SEPARATOR)
+                .map(|part| {
                     part.to_string()
                         .char_indices()
                         .map(|(i, ch)| if i == 0 { ch.to_ascii_uppercase() } else { ch })
-                        .collect()
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("")
+                        .collect::<String>()
+                })
+                .collect::<Vec<_>>()
+                .join(""),
+        )
     }
 
-    pub fn to_snake_case(&self) -> String {
-        self.0.replace(&String::from(SEPARATOR), "_")
+    pub fn to_lower_case(&self) -> Option<String> {
+        if self.0.contains(SEPARATOR) {
+            return self.to_case(&RESOLVE_LOWERCASE_AS);
+        } else {
+            Some(self.0.clone())
+        }
     }
+}
 
-    pub fn to_pascal_case(&self) -> String {
-        self.0
-            .split(SEPARATOR)
-            .map(|part| {
-                part.to_string()
-                    .char_indices()
-                    .map(|(i, ch)| if i == 0 { ch.to_ascii_uppercase() } else { ch })
-                    .collect::<String>()
-            })
-            .collect::<Vec<_>>()
-            .join("")
+impl FromStr for Token {
+    type Err = u8;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Token::from_casing(
+            &Casing::detect_casing(s).expect(&format!("Failed to detect casing for {}", s)),
+            s,
+        )
+        .ok_or(0)
     }
 }
