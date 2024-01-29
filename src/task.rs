@@ -3,7 +3,21 @@ use std::{
     io::{Read, Seek, SeekFrom, Write},
 };
 
-use crate::{casing::Casing, record::Record, token::Token};
+use crate::{casing::Casing, record::Records, token::Token};
+
+enum Offset {
+    Pos(usize),
+    Neg(usize),
+}
+
+impl Offset {
+    fn apply(&self, num: usize) -> usize {
+        match self {
+            Offset::Pos(v) => num.checked_add(*v).unwrap(),
+            Offset::Neg(v) => num.checked_sub(*v).unwrap(),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Task {
@@ -21,8 +35,8 @@ impl Task {
         }
     }
 
-    pub fn generate_records(&mut self) -> Vec<Record> {
-        let mut records = vec![];
+    pub fn generate_records(&mut self) -> Records {
+        let mut records = Records::new();
 
         let mut buf = String::new();
         let _ = self.file.read_to_string(&mut buf);
@@ -31,8 +45,8 @@ impl Task {
         let casings: Vec<_> = vec![
             Casing::LowerCase,
             Casing::PascalCase,
-            Casing::SnakeCase,
             Casing::CamelCase,
+            Casing::SnakeCase,
         ];
 
         let matches: Vec<_> = casings
@@ -49,42 +63,42 @@ impl Task {
 
             let res: Vec<_> = buf.match_indices(token_to_match).collect();
             for item in res.iter() {
-                records.push(Record {
-                    pos: item.0,
-                    len: token_to_match.len(),
-                    case: casing.clone(),
-                })
+                let _ = records.try_insert(item.0, token_to_match.len(), casing.clone());
             }
         }
 
         records
     }
 
-    pub fn process_records(&mut self, records: &mut [Record]) {
+    pub fn process_records(&mut self, records: &mut Records) {
         let mut buf = String::new();
         let _ = self.file.read_to_string(&mut buf);
 
-        // sort to make the offset work
-        records.sort_by(|a, b| a.pos.cmp(&b.pos));
-
         dbg!(&records);
 
-        let mut offset = 0;
+        let mut offset = Offset::Pos(0);
 
-        for record in records.iter() {
-            let rename_to = self.rename_to.to_case(&record.case);
+        for (_, record) in records.iter() {
+            let rename_to = self.rename_to.to_case(&record.casing);
             if rename_to.is_none() {
                 continue;
             }
 
             let rename_to = rename_to.unwrap();
 
-            let start = record.pos + offset;
-            let end = record.pos + record.len + offset;
+            let start = offset.apply(record.pos);
+            let end = offset.apply(record.pos + record.len);
 
             buf.replace_range(start..end, &rename_to);
 
-            offset += rename_to.len() - record.len;
+            offset = {
+                let value = rename_to.len().abs_diff(record.len);
+                if rename_to.len() <= record.len {
+                    Offset::Neg(value)
+                } else {
+                    Offset::Pos(value)
+                }
+            }
         }
 
         println!("{}", &buf);

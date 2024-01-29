@@ -78,10 +78,6 @@ impl Token {
     }
 
     pub fn to_camel_case(&self) -> Option<String> {
-        if !self.0.contains(SEPARATOR) {
-            return None;
-        }
-
         Some(
             self.0
                 .split(SEPARATOR)
@@ -102,10 +98,6 @@ impl Token {
     }
 
     pub fn to_snake_case(&self) -> Option<String> {
-        if !self.0.contains(SEPARATOR) {
-            return None;
-        }
-
         Some(self.0.replace(&String::from(SEPARATOR), "_"))
     }
 
