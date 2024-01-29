@@ -3,8 +3,13 @@ use std::{
     io::{Read, Seek, SeekFrom, Write},
 };
 
-use crate::{casing::Casing, record::Records, token::Token};
+use crate::{
+    casing::Casing,
+    record::Records,
+    token::{Token, TokenError},
+};
 
+#[derive(Debug)]
 enum Offset {
     Pos(usize),
     Neg(usize),
@@ -51,11 +56,11 @@ impl Task {
 
         let matches: Vec<_> = casings
             .iter()
-            .map(|casing| self.candidate.to_casing(casing))
+            .map(|casing| self.candidate.try_to_casing(casing))
             .collect();
 
         for (casing, token_to_match) in casings.iter().zip(matches.iter()) {
-            if token_to_match.is_none() {
+            if token_to_match.is_err() {
                 continue;
             }
 
@@ -79,25 +84,44 @@ impl Task {
         let mut offset = Offset::Pos(0);
 
         for (_, record) in records.iter() {
-            let rename_to = self.rename_to.to_casing(&record.casing);
-            if rename_to.is_none() {
-                continue;
-            }
-
-            let rename_to = rename_to.unwrap();
+            let rename_to = self
+                .rename_to
+                .try_to_casing(&record.casing)
+                .unwrap_or_else(|err| match err {
+                    TokenError::AmbiguousToLowerCase => self.rename_to.to_camel_case(),
+                });
 
             let start = offset.apply(record.pos);
             let end = offset.apply(record.pos + record.len);
 
             buf.replace_range(start..end, &rename_to);
 
-            offset = {
+            let this_offset = {
                 let value = rename_to.len().abs_diff(record.len);
                 if rename_to.len() <= record.len {
                     Offset::Neg(value)
                 } else {
                     Offset::Pos(value)
                 }
+            };
+
+            offset = match (offset, this_offset) {
+                (Offset::Pos(a), Offset::Pos(b)) => Offset::Pos(a + b),
+                (Offset::Pos(a), Offset::Neg(b)) => {
+                    if b > a {
+                        Offset::Neg(b - a)
+                    } else {
+                        Offset::Pos(a - b)
+                    }
+                }
+                (Offset::Neg(a), Offset::Pos(b)) => {
+                    if a > b {
+                        Offset::Neg(a - b)
+                    } else {
+                        Offset::Pos(b - a)
+                    }
+                }
+                (Offset::Neg(a), Offset::Neg(b)) => Offset::Neg(a + b),
             }
         }
 

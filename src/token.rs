@@ -3,16 +3,21 @@ use std::str::FromStr;
 use crate::{casing::Casing, SEPARATOR};
 
 #[derive(Debug)]
+pub enum TokenError {
+    AmbiguousToLowerCase,
+}
+
+#[derive(Debug)]
 pub struct Token(String);
 
 impl Token {
-    pub fn to_casing(&self, casing: &Casing) -> Option<String> {
+    pub fn try_to_casing(&self, casing: &Casing) -> Result<String, TokenError> {
         match casing {
-            Casing::CamelCase => self.to_camel_case(),
-            Casing::PascalCase => self.to_pascal_case(),
-            Casing::LowerCase => self.to_lower_case(),
+            Casing::CamelCase => Ok(self.to_camel_case()),
+            Casing::PascalCase => Ok(self.to_pascal_case()),
+            Casing::LowerCase => self.try_to_lower_case(),
             Casing::KebabCase => todo!(),
-            Casing::SnakeCase => self.to_snake_case(),
+            Casing::SnakeCase => Ok(self.to_snake_case()),
             Casing::UpperCase => todo!(),
             Casing::UpperSnakeCase => todo!(),
             Casing::UpperKebabCase => todo!(),
@@ -77,50 +82,46 @@ impl Token {
         Some(Token(result))
     }
 
-    pub fn to_camel_case(&self) -> Option<String> {
-        Some(
-            self.0
-                .split(SEPARATOR)
-                .enumerate()
-                .map(|(i, part)| {
-                    if i == 0 {
-                        part.to_string()
-                    } else {
-                        part.to_string()
-                            .char_indices()
-                            .map(|(i, ch)| if i == 0 { ch.to_ascii_uppercase() } else { ch })
-                            .collect()
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join(""),
-        )
-    }
-
-    pub fn to_snake_case(&self) -> Option<String> {
-        Some(self.0.replace(&String::from(SEPARATOR), "_"))
-    }
-
-    pub fn to_pascal_case(&self) -> Option<String> {
-        Some(
-            self.0
-                .split(SEPARATOR)
-                .map(|part| {
+    pub fn to_camel_case(&self) -> String {
+        self.0
+            .split(SEPARATOR)
+            .enumerate()
+            .map(|(i, part)| {
+                if i == 0 {
+                    part.to_string()
+                } else {
                     part.to_string()
                         .char_indices()
                         .map(|(i, ch)| if i == 0 { ch.to_ascii_uppercase() } else { ch })
-                        .collect::<String>()
-                })
-                .collect::<Vec<_>>()
-                .join(""),
-        )
+                        .collect()
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("")
     }
 
-    pub fn to_lower_case(&self) -> Option<String> {
+    pub fn to_snake_case(&self) -> String {
+        self.0.replace(&String::from(SEPARATOR), "_")
+    }
+
+    pub fn to_pascal_case(&self) -> String {
+        self.0
+            .split(SEPARATOR)
+            .map(|part| {
+                part.to_string()
+                    .char_indices()
+                    .map(|(i, ch)| if i == 0 { ch.to_ascii_uppercase() } else { ch })
+                    .collect::<String>()
+            })
+            .collect::<Vec<_>>()
+            .join("")
+    }
+
+    pub fn try_to_lower_case(&self) -> Result<String, TokenError> {
         if self.0.contains(SEPARATOR) {
-            return None;
+            return Err(TokenError::AmbiguousToLowerCase);
         } else {
-            Some(self.0.clone())
+            Ok(self.0.clone())
         }
     }
 }
