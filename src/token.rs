@@ -6,7 +6,7 @@ use crate::{casing::Casing, SEPARATOR};
 pub struct Token(String);
 
 impl Token {
-    pub fn to_case(&self, casing: &Casing) -> Option<String> {
+    pub fn to_casing(&self, casing: &Casing) -> Option<String> {
         match casing {
             Casing::CamelCase => self.to_camel_case(),
             Casing::PascalCase => self.to_pascal_case(),

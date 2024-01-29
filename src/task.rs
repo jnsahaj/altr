@@ -51,7 +51,7 @@ impl Task {
 
         let matches: Vec<_> = casings
             .iter()
-            .map(|casing| self.candidate.to_case(casing))
+            .map(|casing| self.candidate.to_casing(casing))
             .collect();
 
         for (casing, token_to_match) in casings.iter().zip(matches.iter()) {
@@ -79,7 +79,7 @@ impl Task {
         let mut offset = Offset::Pos(0);
 
         for (_, record) in records.iter() {
-            let rename_to = self.rename_to.to_case(&record.casing);
+            let rename_to = self.rename_to.to_casing(&record.casing);
             if rename_to.is_none() {
                 continue;
             }
