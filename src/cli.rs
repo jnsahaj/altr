@@ -10,7 +10,7 @@ use crate::task::Task;
 #[derive(Parser, Debug)]
 struct Cli {
     candidate: String,
-    rename_to: String,
+    rename: String,
 
     #[arg(short, long)]
     file: String,
@@ -30,7 +30,7 @@ pub fn run() -> Result<(), clap::Error> {
     let cli = Cli::parse();
     dbg!(&cli);
 
-    let mut task = Task::new(&cli.candidate, &cli.rename_to);
+    let mut task = Task::new(&cli.candidate, &cli.rename);
 
     let mut records = task.generate_records(get_file_reader(&cli.file));
     let buf = task.process_records(&mut records, &mut get_file_reader(&cli.file));

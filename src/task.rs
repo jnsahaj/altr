@@ -12,14 +12,14 @@ mod offset;
 #[derive(Debug)]
 pub struct Task {
     candidate: Token,
-    rename_to: Token,
+    rename: Token,
 }
 
 impl Task {
-    pub fn new(candidate: &str, rename_to: &str) -> Self {
+    pub fn new(candidate: &str, rename: &str) -> Self {
         Self {
             candidate: candidate.parse().unwrap(),
-            rename_to: rename_to.parse().unwrap(),
+            rename: rename.parse().unwrap(),
         }
     }
 
@@ -29,6 +29,7 @@ impl Task {
         let mut buf = String::new();
         let _ = reader.read_to_string(&mut buf);
 
+        // collection of casings to operate on
         let casings: Vec<_> = vec![
             Casing::Lower,
             Casing::Pascal,
@@ -38,6 +39,7 @@ impl Task {
             Casing::UpperSnake,
         ];
 
+        // compute the candidate's value as per each casing
         let matches: Vec<_> = casings
             .iter()
             .map(|casing| self.candidate.try_to_casing(casing))
@@ -68,20 +70,20 @@ impl Task {
         let mut offset = Offset::Pos(0);
 
         for (_, record) in records.iter() {
-            let rename_to = self
-                .rename_to
-                .try_to_casing(&record.casing)
-                .unwrap_or_else(|err| match err {
-                    TokenError::AmbiguousToLowerCase => self.rename_to.to_camel_case(),
-                    TokenError::AmbiguousToUpperCase => self.rename_to.to_upper_snake_case(),
-                });
+            let rename =
+                self.rename
+                    .try_to_casing(&record.casing)
+                    .unwrap_or_else(|err| match err {
+                        TokenError::AmbiguousToLowerCase => self.rename.to_camel_case(),
+                        TokenError::AmbiguousToUpperCase => self.rename.to_upper_snake_case(),
+                    });
 
             let start = offset.apply(record.pos);
             let end = offset.apply(record.pos + record.len);
 
-            buf.replace_range(start..end, &rename_to);
+            buf.replace_range(start..end, &rename);
 
-            offset = Offset::add(offset, Offset::from_diff(rename_to.len(), record.len));
+            offset = Offset::add(offset, Offset::from_diff(rename.len(), record.len));
         }
 
         buf
@@ -107,11 +109,8 @@ mod test_task {
         Cursor::new(Vec::with_capacity(capacity))
     }
 
-    fn task_test_creator<'a>(
-        candidate: &'a str,
-        rename_to: &'a str,
-    ) -> impl FnOnce(&'a str, &'a str) {
-        let mut task = Task::new(candidate, rename_to);
+    fn task_test_creator<'a>(candidate: &'a str, rename: &'a str) -> impl FnOnce(&'a str, &'a str) {
+        let mut task = Task::new(candidate, rename);
 
         let f = move |input: &str, expected: &str| {
             let mut records = task.generate_records(get_reader(input));
@@ -140,19 +139,19 @@ mod test_task {
     #[test]
     fn test_1() {
         let candidate = "user";
-        let rename_to = "supplyUser";
+        let rename = "supplyUser";
 
         let input = r"user User USER";
         let expected = r"supplyUser SupplyUser SUPPLY_USER";
 
-        let assert = task_test_creator(candidate, rename_to);
+        let assert = task_test_creator(candidate, rename);
         assert(input, expected);
     }
 
     #[test]
     fn test_2() {
         let candidate = "user";
-        let rename_to = "dayTrader";
+        let rename = "dayTrader";
 
         let input = r#"
                 const [user, setUser] = useState("");
@@ -180,10 +179,10 @@ mod test_task {
                 }
         "#;
 
-        let assert = task_test_creator(candidate, rename_to);
+        let assert = task_test_creator(candidate, rename);
         assert(input, expected);
 
-        let reverse_assert = task_test_creator(rename_to, candidate);
+        let reverse_assert = task_test_creator(rename, candidate);
         reverse_assert(expected, input);
     }
 }
