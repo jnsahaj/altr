@@ -6,23 +6,11 @@ use std::{
 use crate::{
     casing::Casing,
     record::Records,
+    task::offset::Offset,
     token::{Token, TokenError},
 };
 
-#[derive(Debug)]
-enum Offset {
-    Pos(usize),
-    Neg(usize),
-}
-
-impl Offset {
-    fn apply(&self, num: usize) -> usize {
-        match self {
-            Offset::Pos(v) => num.checked_add(*v).unwrap(),
-            Offset::Neg(v) => num.checked_sub(*v).unwrap(),
-        }
-    }
-}
+mod offset;
 
 #[derive(Debug)]
 pub struct Task {
@@ -96,33 +84,7 @@ impl Task {
 
             buf.replace_range(start..end, &rename_to);
 
-            let this_offset = {
-                let value = rename_to.len().abs_diff(record.len);
-                if rename_to.len() <= record.len {
-                    Offset::Neg(value)
-                } else {
-                    Offset::Pos(value)
-                }
-            };
-
-            offset = match (offset, this_offset) {
-                (Offset::Pos(a), Offset::Pos(b)) => Offset::Pos(a + b),
-                (Offset::Pos(a), Offset::Neg(b)) => {
-                    if b > a {
-                        Offset::Neg(b - a)
-                    } else {
-                        Offset::Pos(a - b)
-                    }
-                }
-                (Offset::Neg(a), Offset::Pos(b)) => {
-                    if a > b {
-                        Offset::Neg(a - b)
-                    } else {
-                        Offset::Pos(b - a)
-                    }
-                }
-                (Offset::Neg(a), Offset::Neg(b)) => Offset::Neg(a + b),
-            }
+            offset = Offset::add(offset, Offset::from_diff(rename_to.len(), record.len));
         }
 
         println!("{}", &buf);
