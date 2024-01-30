@@ -104,7 +104,7 @@ mod test_task {
     }
 
     fn get_writer(capacity: usize) -> Cursor<Vec<u8>> {
-        let cursor = Cursor::new("".into());
+        let cursor = Cursor::new(Vec::with_capacity(capacity));
         cursor
     }
 
@@ -163,7 +163,7 @@ mod test_task {
                 }
                 
                 function setUserName(name: IUserName) {
-                    // could also have been user
+                    // could also have been USER
                     user.name = name;
                 }
         "#;
@@ -176,7 +176,7 @@ mod test_task {
                 }
                 
                 function setDayTraderName(name: IDayTraderName) {
-                    // could also have been dayTrader
+                    // could also have been DAY_TRADER
                     dayTrader.name = name;
                 }
         "#;
