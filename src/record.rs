@@ -21,7 +21,7 @@ impl Records {
         }
     }
 
-    pub fn try_insert<'a>(&mut self, pos: usize, len: usize, casing: Casing) -> Result<(), String> {
+    pub fn try_insert(&mut self, pos: usize, len: usize, casing: Casing) -> Result<(), String> {
         if self.map.contains_key(&pos) {
             return Err("Key already present".into());
         }

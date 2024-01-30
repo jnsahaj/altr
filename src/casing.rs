@@ -1,56 +1,56 @@
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Casing {
-    CamelCase,
-    PascalCase,
-    LowerCase,
-    KebabCase,
-    SnakeCase,
-    UpperCase,
-    UpperSnakeCase,
-    UpperKebabCase,
+    Camel,
+    Pascal,
+    Lower,
+    Kebab,
+    Snake,
+    Upper,
+    UpperSnake,
+    UpperKebab,
 }
 
 impl Casing {
     pub fn detect_casing(s: &str) -> Option<Casing> {
         if s.chars().all(|c| c.is_lowercase()) {
-            return Some(Casing::LowerCase);
+            return Some(Casing::Lower);
         }
 
         if s.chars().all(|c| c.is_uppercase()) {
-            return Some(Casing::UpperCase);
+            return Some(Casing::Upper);
         }
 
         if s.contains('_') && s.chars().all(|c| c == '_' || c.is_lowercase()) {
-            return Some(Casing::SnakeCase);
+            return Some(Casing::Snake);
         }
 
         if s.contains('-') && s.chars().all(|c| c == '-' || c.is_lowercase()) {
-            return Some(Casing::KebabCase);
+            return Some(Casing::Kebab);
         }
 
         if s.chars().all(|c| c.is_uppercase() || c == '_') {
-            return Some(Casing::UpperSnakeCase);
+            return Some(Casing::UpperSnake);
         }
 
         if s.chars().all(|c| c.is_uppercase() || c == '-') {
-            return Some(Casing::UpperKebabCase);
+            return Some(Casing::UpperKebab);
         }
 
         // NOTE: PascalCase and CamelCase checks depend on position
         // which means the above checks are necessary and these cannot be moved arbitrarily
 
         if s.chars().next().is_some_and(|c| c.is_lowercase())
-            && !s.contains("-")
-            && !s.contains("_")
+            && !s.contains('-')
+            && !s.contains('_')
         {
-            return Some(Casing::CamelCase);
+            return Some(Casing::Camel);
         }
 
         if s.chars().next().is_some_and(|c| c.is_uppercase())
-            && !s.contains("-")
-            && !s.contains("_")
+            && !s.contains('-')
+            && !s.contains('_')
         {
-            return Some(Casing::PascalCase);
+            return Some(Casing::Pascal);
         }
 
         None
@@ -69,56 +69,56 @@ mod test_casing {
     fn lower_case() {
         let inputs = vec!["lowercase", "keys", "inputs"];
 
-        assert_inputs_casing(&inputs, Some(Casing::LowerCase));
+        assert_inputs_casing(&inputs, Some(Casing::Lower));
     }
 
     #[test]
     fn upper_case() {
         let inputs = vec!["UPPERCASE", "KEYS", "INPUTS"];
 
-        assert_inputs_casing(&inputs, Some(Casing::UpperCase));
+        assert_inputs_casing(&inputs, Some(Casing::Upper));
     }
 
     #[test]
     fn snake_case() {
         let inputs = vec!["snake_case", "with_underscore", "multiple_words"];
 
-        assert_inputs_casing(&inputs, Some(Casing::SnakeCase));
+        assert_inputs_casing(&inputs, Some(Casing::Snake));
     }
 
     #[test]
     fn kebab_case() {
         let inputs = vec!["kebab-case", "with-hyphen", "multiple-words"];
 
-        assert_inputs_casing(&inputs, Some(Casing::KebabCase));
+        assert_inputs_casing(&inputs, Some(Casing::Kebab));
     }
 
     #[test]
     fn camel_case() {
         let inputs = vec!["camelCase", "withMixedCase", "multipleWords"];
 
-        assert_inputs_casing(&inputs, Some(Casing::CamelCase));
+        assert_inputs_casing(&inputs, Some(Casing::Camel));
     }
 
     #[test]
     fn pascal_case() {
         let inputs = vec!["PascalCase", "WithMixedCase", "MultipleWords"];
 
-        assert_inputs_casing(&inputs, Some(Casing::PascalCase));
+        assert_inputs_casing(&inputs, Some(Casing::Pascal));
     }
 
     #[test]
     fn upper_snake_case() {
         let inputs = vec!["UPPER_SNAKE_CASE", "WITH_UNDERSCORE", "MULTIPLE_WORDS"];
 
-        assert_inputs_casing(&inputs, Some(Casing::UpperSnakeCase));
+        assert_inputs_casing(&inputs, Some(Casing::UpperSnake));
     }
 
     #[test]
     fn upper_kebab_case() {
         let inputs = vec!["UPPER-KEBAB-CASE", "WITH-HYPHEN", "MULTIPLE-WORDS"];
 
-        assert_inputs_casing(&inputs, Some(Casing::UpperKebabCase));
+        assert_inputs_casing(&inputs, Some(Casing::UpperKebab));
     }
 
     #[test]

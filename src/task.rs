@@ -30,12 +30,12 @@ impl Task {
         let _ = reader.read_to_string(&mut buf);
 
         let casings: Vec<_> = vec![
-            Casing::LowerCase,
-            Casing::PascalCase,
-            Casing::CamelCase,
-            Casing::SnakeCase,
-            Casing::UpperCase,
-            Casing::UpperSnakeCase,
+            Casing::Lower,
+            Casing::Pascal,
+            Casing::Camel,
+            Casing::Snake,
+            Casing::Upper,
+            Casing::UpperSnake,
         ];
 
         let matches: Vec<_> = casings
@@ -104,8 +104,7 @@ mod test_task {
     }
 
     fn get_writer(capacity: usize) -> Cursor<Vec<u8>> {
-        let cursor = Cursor::new(Vec::with_capacity(capacity));
-        cursor
+        Cursor::new(Vec::with_capacity(capacity))
     }
 
     fn task_test_creator<'a>(
@@ -119,7 +118,7 @@ mod test_task {
             let result = task.process_records(&mut records, &mut get_reader(input));
 
             let mut writer = get_writer(result.len());
-            let _ = Task::write(&mut writer, &result);
+            Task::write(&mut writer, &result);
 
             let s = writer
                 .get_ref()
@@ -182,9 +181,9 @@ mod test_task {
         "#;
 
         let assert = task_test_creator(candidate, rename_to);
-        assert(&input, &expected);
+        assert(input, expected);
 
         let reverse_assert = task_test_creator(rename_to, candidate);
-        reverse_assert(&expected, &input);
+        reverse_assert(expected, input);
     }
 }

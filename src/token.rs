@@ -14,27 +14,27 @@ pub struct Token(String);
 impl Token {
     pub fn try_to_casing(&self, casing: &Casing) -> Result<String, TokenError> {
         match casing {
-            Casing::CamelCase => Ok(self.to_camel_case()),
-            Casing::PascalCase => Ok(self.to_pascal_case()),
-            Casing::LowerCase => self.try_to_lower_case(),
-            Casing::KebabCase => todo!(),
-            Casing::SnakeCase => Ok(self.to_snake_case()),
-            Casing::UpperCase => self.try_to_upper_case(),
-            Casing::UpperSnakeCase => Ok(self.to_upper_snake_case()),
-            Casing::UpperKebabCase => todo!(),
+            Casing::Camel => Ok(self.to_camel_case()),
+            Casing::Pascal => Ok(self.to_pascal_case()),
+            Casing::Lower => self.try_to_lower_case(),
+            Casing::Kebab => todo!(),
+            Casing::Snake => Ok(self.to_snake_case()),
+            Casing::Upper => self.try_to_upper_case(),
+            Casing::UpperSnake => Ok(self.to_upper_snake_case()),
+            Casing::UpperKebab => todo!(),
         }
     }
 
     pub fn from_casing(casing: &Casing, input: &str) -> Option<Self> {
         match casing {
-            Casing::CamelCase => Token::from_camel_case(input),
-            Casing::PascalCase => Token::from_pascal_case(input),
-            Casing::LowerCase => Some(Token(input.into())),
-            Casing::KebabCase => todo!(),
-            Casing::SnakeCase => Token::from_snake_case(input),
-            Casing::UpperCase => Some(Token(input.into())),
-            Casing::UpperSnakeCase => todo!(),
-            Casing::UpperKebabCase => todo!(),
+            Casing::Camel => Token::from_camel_case(input),
+            Casing::Pascal => Token::from_pascal_case(input),
+            Casing::Lower => Some(Token(input.into())),
+            Casing::Kebab => todo!(),
+            Casing::Snake => Token::from_snake_case(input),
+            Casing::Upper => Some(Token(input.into())),
+            Casing::UpperSnake => todo!(),
+            Casing::UpperKebab => todo!(),
         }
     }
 
@@ -58,7 +58,7 @@ impl Token {
     }
 
     pub fn from_snake_case(input: &str) -> Option<Self> {
-        Some(Token(input.replace("_", &String::from(SEPARATOR))))
+        Some(Token(input.replace('_', &String::from(SEPARATOR))))
     }
 
     pub fn from_pascal_case(input: &str) -> Option<Self> {
@@ -124,7 +124,7 @@ impl Token {
 
     pub fn try_to_lower_case(&self) -> Result<String, TokenError> {
         if self.0.contains(SEPARATOR) {
-            return Err(TokenError::AmbiguousToLowerCase);
+            Err(TokenError::AmbiguousToLowerCase)
         } else {
             Ok(self.0.clone())
         }
@@ -132,7 +132,7 @@ impl Token {
 
     pub fn try_to_upper_case(&self) -> Result<String, TokenError> {
         if self.0.contains(SEPARATOR) {
-            return Err(TokenError::AmbiguousToUpperCase);
+            Err(TokenError::AmbiguousToUpperCase)
         } else {
             Ok(self.0.to_ascii_uppercase().clone())
         }
@@ -144,7 +144,8 @@ impl FromStr for Token {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Token::from_casing(
-            &Casing::detect_casing(s).expect(&format!("Failed to detect casing for {}", s)),
+            &Casing::detect_casing(s)
+                .unwrap_or_else(|| panic!("Failed to detect casing for {}", s)),
             s,
         )
         .ok_or(0)
