@@ -39,15 +39,15 @@ impl Task {
         let casified_candidates: Vec<_> = casings
             .iter()
             .map(|casing| self.candidate.try_to_casing(casing))
-            // NOTE: Ambiguity errors are noop matching cases since those will be automatically
-            // handled by token conversion to cases like camelCase or UpperSnakeCase
-            // Example: "user" is the same in both camelCase and lowercase, hence we ignore the lowercase
-            // ambiguity error here
             .collect();
 
         let casing_with_candidates: Vec<(&Casing, &String)> = casings
             .iter()
             .zip(casified_candidates.iter())
+            // NOTE: Ambiguity errors are noop matching cases since those will be automatically
+            // handled by token conversion to cases like camelCase or UpperSnakeCase
+            // Example: "user" is the same in both camelCase and lowercase, hence we ignore the lowercase
+            // ambiguity error here
             .filter(|(_, p)| p.is_ok())
             .map(|(c, p)| (c, p.as_ref().unwrap()))
             .collect();
