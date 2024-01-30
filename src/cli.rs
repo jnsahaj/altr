@@ -1,4 +1,7 @@
-use std::fs::{File, OpenOptions};
+use std::{
+    fs::OpenOptions,
+    io::{BufRead, BufReader, Write},
+};
 
 use clap::Parser;
 
@@ -13,20 +16,30 @@ struct Cli {
     file: String,
 }
 
+fn get_file_reader(path: &str) -> impl BufRead {
+    let file = OpenOptions::new().read(true).open(path).unwrap();
+
+    BufReader::new(file)
+}
+
+fn get_file_writer(path: &str) -> impl Write {
+    let file = OpenOptions::new().write(true).open(path).unwrap();
+    file
+}
+
 pub fn run() -> Result<(), clap::Error> {
     let cli = Cli::parse();
     dbg!(&cli);
 
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(cli.file)
-        .unwrap();
+    let mut task = Task::new(&cli.candidate, &cli.rename_to);
 
-    let mut task = Task::new(file, &cli.candidate, &cli.rename_to);
+    let mut records = task.generate_records(get_file_reader(&cli.file));
 
-    let mut records = task.generate_records();
-    task.process_records(&mut records);
+    task.process_records(
+        &mut records,
+        get_file_reader(&cli.file),
+        get_file_writer(&cli.file),
+    );
 
     Ok(())
 }

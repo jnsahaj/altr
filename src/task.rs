@@ -1,7 +1,4 @@
-use std::{
-    fs::File,
-    io::{Read, Seek, SeekFrom, Write},
-};
+use std::io::{BufRead, Write};
 
 use crate::{
     casing::Casing,
@@ -16,24 +13,21 @@ mod offset;
 pub struct Task {
     candidate: Token,
     rename_to: Token,
-    file: File,
 }
 
 impl Task {
-    pub fn new(file: File, candidate: &str, rename_to: &str) -> Self {
+    pub fn new(candidate: &str, rename_to: &str) -> Self {
         Self {
             candidate: candidate.parse().unwrap(),
             rename_to: rename_to.parse().unwrap(),
-            file,
         }
     }
 
-    pub fn generate_records(&mut self) -> Records {
+    pub fn generate_records(&mut self, mut reader: impl BufRead) -> Records {
         let mut records = Records::new();
 
         let mut buf = String::new();
-        let _ = self.file.read_to_string(&mut buf);
-        let _ = self.file.seek(SeekFrom::Start(0));
+        let _ = reader.read_to_string(&mut buf);
 
         let casings: Vec<_> = vec![
             Casing::LowerCase,
@@ -63,9 +57,14 @@ impl Task {
         records
     }
 
-    pub fn process_records(&mut self, records: &mut Records) {
+    pub fn process_records(
+        &mut self,
+        records: &mut Records,
+        mut reader: impl BufRead,
+        mut writer: impl Write,
+    ) {
         let mut buf = String::new();
-        let _ = self.file.read_to_string(&mut buf);
+        let _ = reader.read_to_string(&mut buf);
 
         dbg!(&records);
 
@@ -89,10 +88,6 @@ impl Task {
 
         println!("{}", &buf);
 
-        self.file.set_len(0).unwrap();
-        self.file.rewind().unwrap();
-        self.file
-            .write_all(buf.as_bytes())
-            .expect("Failed to write");
+        writer.write_all(buf.as_bytes()).expect("Failed to write");
     }
 }
