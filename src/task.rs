@@ -23,11 +23,8 @@ impl Task {
         }
     }
 
-    pub fn generate_records(&mut self, mut reader: impl BufRead) -> Records {
+    pub fn generate_records(&mut self, reader: impl BufRead) -> Records {
         let mut records = Records::new();
-
-        let mut buf = String::new();
-        let _ = reader.read_to_string(&mut buf);
 
         // collection of casings to operate on
         let casings: Vec<_> = vec![
@@ -39,21 +36,31 @@ impl Task {
             Casing::UpperSnake,
         ];
 
-        for casing in casings.iter() {
-            // compute the candidate's value for each casing
-            let Ok(ref pattern) = self.candidate.try_to_casing(casing) else {
-                // NOTE: Ambiguity errors are noop matching cases since those will be automatically
-                // handled by token conversion to cases like camelCase or UpperSnakeCase
-                // Example: "user" is the same in both camelCase and lowercase, hence we ignore the lowercase
-                // ambiguity error here
-                continue;
-            };
+        let casified_candidates: Vec<_> = casings
+            .iter()
+            .map(|casing| (casing.clone(), self.candidate.try_to_casing(casing)))
+            // NOTE: Ambiguity errors are noop matching cases since those will be automatically
+            // handled by token conversion to cases like camelCase or UpperSnakeCase
+            // Example: "user" is the same in both camelCase and lowercase, hence we ignore the lowercase
+            // ambiguity error here
+            .filter(|(_, p)| p.is_ok())
+            .map(|(c, p)| (c, p.unwrap()))
+            .collect();
 
-            let matches = buf.match_indices(pattern);
+        let mut line_offset: usize = 0;
 
-            for item in matches {
-                let _ = records.try_insert(item.0, pattern.len(), casing.clone());
+        for line in reader.lines() {
+            let line = line.unwrap();
+
+            for (casing, pattern) in casified_candidates.iter() {
+                let matches = line.match_indices(pattern);
+
+                for item in matches {
+                    let _ = records.try_insert(item.0 + line_offset, pattern.len(), casing.clone());
+                }
             }
+
+            line_offset += line.len() + 1; // + 1 accounts for the \n character
         }
 
         records
