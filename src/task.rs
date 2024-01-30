@@ -38,13 +38,18 @@ impl Task {
 
         let casified_candidates: Vec<_> = casings
             .iter()
-            .map(|casing| (casing.clone(), self.candidate.try_to_casing(casing)))
+            .map(|casing| self.candidate.try_to_casing(casing))
             // NOTE: Ambiguity errors are noop matching cases since those will be automatically
             // handled by token conversion to cases like camelCase or UpperSnakeCase
             // Example: "user" is the same in both camelCase and lowercase, hence we ignore the lowercase
             // ambiguity error here
+            .collect();
+
+        let casing_with_candidates: Vec<(&Casing, &String)> = casings
+            .iter()
+            .zip(casified_candidates.iter())
             .filter(|(_, p)| p.is_ok())
-            .map(|(c, p)| (c, p.unwrap()))
+            .map(|(c, p)| (c, p.as_ref().unwrap()))
             .collect();
 
         let mut line_offset: usize = 0;
@@ -52,11 +57,12 @@ impl Task {
         for line in reader.lines() {
             let line = line.unwrap();
 
-            for (casing, pattern) in casified_candidates.iter() {
-                let matches = line.match_indices(pattern);
+            for (casing, pattern) in casing_with_candidates.iter() {
+                let matches = line.match_indices(*pattern);
 
                 for item in matches {
-                    let _ = records.try_insert(item.0 + line_offset, pattern.len(), casing.clone());
+                    let _ =
+                        records.try_insert(item.0 + line_offset, pattern.len(), (**casing).clone());
                 }
             }
 
