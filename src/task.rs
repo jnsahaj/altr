@@ -39,22 +39,20 @@ impl Task {
             Casing::UpperSnake,
         ];
 
-        // compute the candidate's value as per each casing
-        let matches: Vec<_> = casings
-            .iter()
-            .map(|casing| self.candidate.try_to_casing(casing))
-            .collect();
-
-        for (casing, token_to_match) in casings.iter().zip(matches.iter()) {
-            if token_to_match.is_err() {
+        for casing in casings.iter() {
+            // compute the candidate's value for each casing
+            let Ok(ref pattern) = self.candidate.try_to_casing(casing) else {
+                // NOTE: Ambiguity errors are noop matching cases since those will be automatically
+                // handled by token conversion to cases like camelCase or UpperSnakeCase
+                // Example: "user" is the same in both camelCase and lowercase, hence we ignore the lowercase
+                // ambiguity error here
                 continue;
-            }
+            };
 
-            let token_to_match = token_to_match.as_ref().unwrap();
+            let matches = buf.match_indices(pattern);
 
-            let res: Vec<_> = buf.match_indices(token_to_match).collect();
-            for item in res.iter() {
-                let _ = records.try_insert(item.0, token_to_match.len(), casing.clone());
+            for item in matches {
+                let _ = records.try_insert(item.0, pattern.len(), casing.clone());
             }
         }
 
