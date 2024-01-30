@@ -57,12 +57,7 @@ impl Task {
         records
     }
 
-    pub fn process_records(
-        &mut self,
-        records: &mut Records,
-        mut reader: impl BufRead,
-        mut writer: impl Write,
-    ) {
+    pub fn process_records(&mut self, records: &mut Records, reader: &mut impl BufRead) -> String {
         let mut buf = String::new();
         let _ = reader.read_to_string(&mut buf);
 
@@ -86,8 +81,107 @@ impl Task {
             offset = Offset::add(offset, Offset::from_diff(rename_to.len(), record.len));
         }
 
-        println!("{}", &buf);
+        buf
+    }
 
-        writer.write_all(buf.as_bytes()).expect("Failed to write");
+    pub fn write(writer: &mut impl Write, value: &str) {
+        writer.write_all(value.as_bytes()).expect("Failed to write");
+    }
+}
+
+#[cfg(test)]
+mod test_task {
+    use std::io::{BufReader, Cursor, Read};
+
+    use super::*;
+
+    fn get_reader(input: &str) -> impl BufRead {
+        let cursor: Cursor<Vec<u8>> = Cursor::new(input.into());
+        BufReader::new(cursor)
+    }
+
+    fn get_writer(capacity: usize) -> Cursor<Vec<u8>> {
+        let cursor = Cursor::new("".into());
+        cursor
+    }
+
+    fn task_test_creator<'a>(
+        candidate: &'a str,
+        rename_to: &'a str,
+    ) -> impl FnOnce(&'a str, &'a str) {
+        let mut task = Task::new(candidate, rename_to);
+
+        let f = move |input: &str, expected: &str| {
+            let mut records = task.generate_records(get_reader(input));
+            let result = task.process_records(&mut records, &mut get_reader(input));
+
+            let mut writer = get_writer(result.len());
+            let _ = Task::write(&mut writer, &result);
+
+            let s = writer
+                .get_ref()
+                .bytes()
+                .map(|v| v.unwrap())
+                .collect::<Vec<u8>>();
+
+            assert_eq!(
+                s,
+                expected.as_bytes(),
+                "Result: {}",
+                String::from_utf8_lossy(&s)
+            );
+        };
+
+        f
+    }
+
+    #[test]
+    fn test_1() {
+        let candidate = "user";
+        let rename_to = "supplyUser";
+
+        let input = r"user User USER";
+        let expected = r"supplyUser SupplyUser SUPPLYUSER";
+
+        let assert = task_test_creator(candidate, rename_to);
+        assert(input, expected);
+    }
+
+    #[test]
+    fn test_2() {
+        let candidate = "user";
+        let rename_to = "dayTrader";
+
+        let input = r#"
+                const [user, setUser] = useState("");
+
+                function getUserName() {
+                    return user.name;
+                }
+                
+                function setUserName(name: IUserName) {
+                    // could also have been user
+                    user.name = name;
+                }
+        "#;
+
+        let expected = r#"
+                const [dayTrader, setDayTrader] = useState("");
+
+                function getDayTraderName() {
+                    return dayTrader.name;
+                }
+                
+                function setDayTraderName(name: IDayTraderName) {
+                    // could also have been dayTrader
+                    dayTrader.name = name;
+                }
+        "#;
+
+        let assert = task_test_creator(candidate, rename_to);
+        assert(&input, &expected);
+
+        let reverse_assert = task_test_creator(rename_to, candidate);
+        reverse_assert(&expected, &input);
     }
 }
