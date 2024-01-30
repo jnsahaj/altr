@@ -34,6 +34,8 @@ impl Task {
             Casing::Snake,
             Casing::Upper,
             Casing::UpperSnake,
+            Casing::Kebab,
+            Casing::UpperKebab,
         ];
 
         let casified_candidates: Vec<_> = casings
@@ -48,6 +50,8 @@ impl Task {
             // handled by token conversion to cases like camelCase or UpperSnakeCase
             // Example: "user" is the same in both camelCase and lowercase, hence we ignore the lowercase
             // ambiguity error here
+            // As a side-effect, pure lowercase/uppercase matches will be ignored
+            // Example: "myUser" candidate will not altr "myuser"
             .filter(|(_, p)| p.is_ok())
             .map(|(c, p)| (c, p.as_ref().unwrap()))
             .collect();
@@ -195,5 +199,37 @@ mod test_task {
 
         let reverse_assert = task_test_creator(rename, candidate);
         reverse_assert(expected, input);
+    }
+
+    #[test]
+    fn test_3() {
+        let candidate = "oldUser";
+        let rename = "myNewUser";
+
+        let input = r"
+            camel: oldUser
+            pascal: OldUser
+            snake: old_user
+            lower: olduser
+            upper: OLDUSER
+            noop: Olduser
+            kebab: old-user
+            upperkebab: OLD-USER
+            uppersnake: OLD_USER
+        ";
+        let expected = r"
+            camel: myNewUser
+            pascal: MyNewUser
+            snake: my_new_user
+            lower: olduser
+            upper: OLDUSER
+            noop: Olduser
+            kebab: my-new-user
+            upperkebab: MY-NEW-USER
+            uppersnake: MY_NEW_USER
+        ";
+
+        let assert = task_test_creator(candidate, rename);
+        assert(input, expected);
     }
 }

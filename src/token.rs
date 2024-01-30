@@ -17,11 +17,11 @@ impl Token {
             Casing::Camel => Ok(self.to_camel_case()),
             Casing::Pascal => Ok(self.to_pascal_case()),
             Casing::Lower => self.try_to_lower_case(),
-            Casing::Kebab => todo!(),
+            Casing::Kebab => Ok(self.to_kebab_case()),
             Casing::Snake => Ok(self.to_snake_case()),
             Casing::Upper => self.try_to_upper_case(),
             Casing::UpperSnake => Ok(self.to_upper_snake_case()),
-            Casing::UpperKebab => todo!(),
+            Casing::UpperKebab => Ok(self.to_upper_kebab_case()),
         }
     }
 
@@ -30,11 +30,11 @@ impl Token {
             Casing::Camel => Token::from_camel_case(input),
             Casing::Pascal => Token::from_pascal_case(input),
             Casing::Lower => Some(Token(input.into())),
-            Casing::Kebab => todo!(),
+            Casing::Kebab => Token::from_kebab_case(input),
             Casing::Snake => Token::from_snake_case(input),
             Casing::Upper => Some(Token(input.into())),
-            Casing::UpperSnake => todo!(),
-            Casing::UpperKebab => todo!(),
+            Casing::UpperSnake => Token::from_upper_snake_case(input),
+            Casing::UpperKebab => Token::from_upper_kebab_case(input),
         }
     }
 
@@ -59,6 +59,26 @@ impl Token {
 
     pub fn from_snake_case(input: &str) -> Option<Self> {
         Some(Token(input.replace('_', &String::from(SEPARATOR))))
+    }
+
+    pub fn from_upper_snake_case(input: &str) -> Option<Self> {
+        Some(Token(
+            input
+                .replace('_', &String::from(SEPARATOR))
+                .to_ascii_lowercase(),
+        ))
+    }
+
+    pub fn from_kebab_case(input: &str) -> Option<Self> {
+        Some(Token(input.replace('-', &String::from(SEPARATOR))))
+    }
+
+    pub fn from_upper_kebab_case(input: &str) -> Option<Self> {
+        Some(Token(
+            input
+                .replace('-', &String::from(SEPARATOR))
+                .to_ascii_lowercase(),
+        ))
     }
 
     pub fn from_pascal_case(input: &str) -> Option<Self> {
@@ -136,6 +156,14 @@ impl Token {
         } else {
             Ok(self.0.to_ascii_uppercase().clone())
         }
+    }
+
+    pub fn to_kebab_case(&self) -> String {
+        self.0.replace(&String::from(SEPARATOR), "-")
+    }
+
+    pub fn to_upper_kebab_case(&self) -> String {
+        self.to_kebab_case().to_ascii_uppercase()
     }
 }
 
