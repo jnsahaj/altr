@@ -5,6 +5,7 @@ use crate::{casing::Casing, SEPARATOR};
 #[derive(Debug)]
 pub enum TokenError {
     AmbiguousToLowerCase,
+    AmbiguousToUpperCase,
 }
 
 #[derive(Debug)]
@@ -18,8 +19,8 @@ impl Token {
             Casing::LowerCase => self.try_to_lower_case(),
             Casing::KebabCase => todo!(),
             Casing::SnakeCase => Ok(self.to_snake_case()),
-            Casing::UpperCase => todo!(),
-            Casing::UpperSnakeCase => todo!(),
+            Casing::UpperCase => self.try_to_upper_case(),
+            Casing::UpperSnakeCase => Ok(self.to_upper_snake_case()),
             Casing::UpperKebabCase => todo!(),
         }
     }
@@ -31,7 +32,7 @@ impl Token {
             Casing::LowerCase => Some(Token(input.into())),
             Casing::KebabCase => todo!(),
             Casing::SnakeCase => Token::from_snake_case(input),
-            Casing::UpperCase => todo!(),
+            Casing::UpperCase => Some(Token(input.into())),
             Casing::UpperSnakeCase => todo!(),
             Casing::UpperKebabCase => todo!(),
         }
@@ -104,6 +105,10 @@ impl Token {
         self.0.replace(&String::from(SEPARATOR), "_")
     }
 
+    pub fn to_upper_snake_case(&self) -> String {
+        self.to_snake_case().to_ascii_uppercase()
+    }
+
     pub fn to_pascal_case(&self) -> String {
         self.0
             .split(SEPARATOR)
@@ -122,6 +127,14 @@ impl Token {
             return Err(TokenError::AmbiguousToLowerCase);
         } else {
             Ok(self.0.clone())
+        }
+    }
+
+    pub fn try_to_upper_case(&self) -> Result<String, TokenError> {
+        if self.0.contains(SEPARATOR) {
+            return Err(TokenError::AmbiguousToUpperCase);
+        } else {
+            Ok(self.0.to_ascii_uppercase().clone())
         }
     }
 }

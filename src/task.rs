@@ -34,6 +34,8 @@ impl Task {
             Casing::PascalCase,
             Casing::CamelCase,
             Casing::SnakeCase,
+            Casing::UpperCase,
+            Casing::UpperSnakeCase,
         ];
 
         let matches: Vec<_> = casings
@@ -71,6 +73,7 @@ impl Task {
                 .try_to_casing(&record.casing)
                 .unwrap_or_else(|err| match err {
                     TokenError::AmbiguousToLowerCase => self.rename_to.to_camel_case(),
+                    TokenError::AmbiguousToUpperCase => self.rename_to.to_upper_snake_case(),
                 });
 
             let start = offset.apply(record.pos);
@@ -141,7 +144,7 @@ mod test_task {
         let rename_to = "supplyUser";
 
         let input = r"user User USER";
-        let expected = r"supplyUser SupplyUser SUPPLYUSER";
+        let expected = r"supplyUser SupplyUser SUPPLY_USER";
 
         let assert = task_test_creator(candidate, rename_to);
         assert(input, expected);
