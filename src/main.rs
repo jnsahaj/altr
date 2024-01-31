@@ -1,3 +1,5 @@
+use std::process;
+
 mod casing;
 mod cli;
 mod record;
@@ -7,5 +9,8 @@ mod token;
 const SEPARATOR: char = ',';
 
 fn main() {
-    let _ = cli::run();
+    if let Err(e) = cli::run() {
+        eprintln!("{e}");
+        process::exit(1);
+    }
 }

@@ -11,29 +11,29 @@ pub enum Casing {
 }
 
 impl Casing {
-    pub fn detect_casing(s: &str) -> Option<Casing> {
+    pub fn detect_casing(s: &str) -> Result<Casing, String> {
         if s.chars().all(|c| c.is_lowercase()) {
-            return Some(Casing::Lower);
+            return Ok(Casing::Lower);
         }
 
         if s.chars().all(|c| c.is_uppercase()) {
-            return Some(Casing::Upper);
+            return Ok(Casing::Upper);
         }
 
         if s.contains('_') && s.chars().all(|c| c == '_' || c.is_lowercase()) {
-            return Some(Casing::Snake);
+            return Ok(Casing::Snake);
         }
 
         if s.contains('-') && s.chars().all(|c| c == '-' || c.is_lowercase()) {
-            return Some(Casing::Kebab);
+            return Ok(Casing::Kebab);
         }
 
         if s.chars().all(|c| c.is_uppercase() || c == '_') {
-            return Some(Casing::UpperSnake);
+            return Ok(Casing::UpperSnake);
         }
 
         if s.chars().all(|c| c.is_uppercase() || c == '-') {
-            return Some(Casing::UpperKebab);
+            return Ok(Casing::UpperKebab);
         }
 
         // NOTE: PascalCase and CamelCase checks depend on position
@@ -43,17 +43,17 @@ impl Casing {
             && !s.contains('-')
             && !s.contains('_')
         {
-            return Some(Casing::Camel);
+            return Ok(Casing::Camel);
         }
 
         if s.chars().next().is_some_and(|c| c.is_uppercase())
             && !s.contains('-')
             && !s.contains('_')
         {
-            return Some(Casing::Pascal);
+            return Ok(Casing::Pascal);
         }
 
-        None
+        Err(format!("Failed to detect casing for {}", s))
     }
 }
 
@@ -61,71 +61,73 @@ impl Casing {
 mod test_casing {
     use super::Casing;
 
-    fn assert_inputs_casing(inputs: &[&str], casing: Option<Casing>) {
-        assert!(inputs.iter().all(|i| Casing::detect_casing(i) == casing));
+    fn assert_inputs_casing(inputs: &[&str], casing: Casing) {
+        assert!(inputs
+            .iter()
+            .all(|i| Casing::detect_casing(i).unwrap() == casing));
     }
 
     #[test]
     fn lower_case() {
         let inputs = vec!["lowercase", "keys", "inputs"];
 
-        assert_inputs_casing(&inputs, Some(Casing::Lower));
+        assert_inputs_casing(&inputs, Casing::Lower);
     }
 
     #[test]
     fn upper_case() {
         let inputs = vec!["UPPERCASE", "KEYS", "INPUTS"];
 
-        assert_inputs_casing(&inputs, Some(Casing::Upper));
+        assert_inputs_casing(&inputs, Casing::Upper);
     }
 
     #[test]
     fn snake_case() {
         let inputs = vec!["snake_case", "with_underscore", "multiple_words"];
 
-        assert_inputs_casing(&inputs, Some(Casing::Snake));
+        assert_inputs_casing(&inputs, Casing::Snake);
     }
 
     #[test]
     fn kebab_case() {
         let inputs = vec!["kebab-case", "with-hyphen", "multiple-words"];
 
-        assert_inputs_casing(&inputs, Some(Casing::Kebab));
+        assert_inputs_casing(&inputs, Casing::Kebab);
     }
 
     #[test]
     fn camel_case() {
         let inputs = vec!["camelCase", "withMixedCase", "multipleWords"];
 
-        assert_inputs_casing(&inputs, Some(Casing::Camel));
+        assert_inputs_casing(&inputs, Casing::Camel);
     }
 
     #[test]
     fn pascal_case() {
         let inputs = vec!["PascalCase", "WithMixedCase", "MultipleWords"];
 
-        assert_inputs_casing(&inputs, Some(Casing::Pascal));
+        assert_inputs_casing(&inputs, Casing::Pascal);
     }
 
     #[test]
     fn upper_snake_case() {
         let inputs = vec!["UPPER_SNAKE_CASE", "WITH_UNDERSCORE", "MULTIPLE_WORDS"];
 
-        assert_inputs_casing(&inputs, Some(Casing::UpperSnake));
+        assert_inputs_casing(&inputs, Casing::UpperSnake);
     }
 
     #[test]
     fn upper_kebab_case() {
         let inputs = vec!["UPPER-KEBAB-CASE", "WITH-HYPHEN", "MULTIPLE-WORDS"];
 
-        assert_inputs_casing(&inputs, Some(Casing::UpperKebab));
+        assert_inputs_casing(&inputs, Casing::UpperKebab);
     }
 
     #[test]
     fn invalid_case() {
         let inputs = vec!["InVA-lid", "INVa_lid", "in-Va_lid", "in-va_lid"];
 
-        assert_inputs_casing(&inputs, None);
+        assert!(inputs.iter().all(|i| Casing::detect_casing(i).is_err()));
     }
 }
 

@@ -1,4 +1,4 @@
-use std::io::{BufRead, Write};
+use std::io::{self, BufRead, Write};
 
 use crate::{
     casing::{Casing, CasingSeparator},
@@ -17,15 +17,15 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(candidate: &str, rename: &str) -> Self {
-        Self {
-            candidate: candidate.parse().unwrap(),
-            rename: rename.parse().unwrap(),
-            preferred_casing_separator: Casing::detect_casing(rename).into(),
-        }
+    pub fn build(candidate: &str, rename: &str) -> Result<Self, String> {
+        Ok(Self {
+            candidate: candidate.parse()?,
+            rename: rename.parse()?,
+            preferred_casing_separator: Casing::detect_casing(rename)?.into(),
+        })
     }
 
-    pub fn generate_records(&mut self, reader: impl BufRead) -> Records {
+    pub fn generate_records(&mut self, reader: impl BufRead) -> Result<Records, io::Error> {
         let mut records = Records::new();
 
         // collection of casings to operate on
@@ -55,13 +55,13 @@ impl Task {
             // As a side-effect, pure lowercase/uppercase matches will be ignored
             // Example: "myUser" candidate will not altr "myuser"
             .filter(|(_, p)| p.is_ok())
-            .map(|(c, p)| (c, p.as_ref().unwrap()))
+            .map(|(c, p)| (c, p.as_ref().expect("fitering Ok values")))
             .collect();
 
         let mut line_offset: usize = 0;
 
         for line in reader.lines() {
-            let line = line.unwrap();
+            let line = line?;
 
             for (casing, pattern) in casing_with_candidates.iter() {
                 let matches = line.match_indices(*pattern);
@@ -75,7 +75,7 @@ impl Task {
             line_offset += line.len() + 1; // + 1 accounts for the \n character
         }
 
-        records
+        Ok(records)
     }
 
     pub fn process_records(&mut self, records: &mut Records, reader: &mut impl BufRead) -> String {
@@ -114,8 +114,8 @@ impl Task {
         buf
     }
 
-    pub fn write(writer: &mut impl Write, value: &str) {
-        writer.write_all(value.as_bytes()).expect("Failed to write");
+    pub fn write(writer: &mut impl Write, value: &str) -> Result<(), io::Error> {
+        writer.write_all(value.as_bytes())
     }
 }
 
@@ -135,14 +135,14 @@ mod test_task {
     }
 
     fn task_test_creator<'a>(candidate: &'a str, rename: &'a str) -> impl FnOnce(&'a str, &'a str) {
-        let mut task = Task::new(candidate, rename);
+        let mut task = Task::build(candidate, rename).unwrap();
 
         let f = move |input: &str, expected: &str| {
-            let mut records = task.generate_records(get_reader(input));
+            let mut records = task.generate_records(get_reader(input)).unwrap();
             let result = task.process_records(&mut records, &mut get_reader(input));
 
             let mut writer = get_writer(result.len());
-            Task::write(&mut writer, &result);
+            let _ = Task::write(&mut writer, &result);
 
             let s = writer
                 .get_ref()
@@ -255,6 +255,12 @@ mod test_task {
         assert(
             "result | Result | RESULT | rEsult",
             "parsed-transaction | ParsedTransaction | PARSED-TRANSACTION | rEsult",
+        );
+
+        let assert = task_test_creator("result", "parsed_transaction");
+        assert(
+            "result | Result | RESULT | rEsult",
+            "parsed_transaction | ParsedTransaction | PARSED_TRANSACTION | rEsult",
         );
     }
 }
