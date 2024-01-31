@@ -128,3 +128,35 @@ mod test_casing {
         assert_inputs_casing(&inputs, None);
     }
 }
+
+#[derive(Debug)]
+pub enum CasingSeparator {
+    None,
+    Underscore,
+    Hyphen,
+}
+
+impl From<Casing> for CasingSeparator {
+    fn from(value: Casing) -> Self {
+        match value {
+            Casing::Camel => CasingSeparator::None,
+            Casing::Pascal => CasingSeparator::None,
+            Casing::Lower => CasingSeparator::None,
+            Casing::Kebab => CasingSeparator::Hyphen,
+            Casing::Snake => CasingSeparator::Underscore,
+            Casing::Upper => CasingSeparator::None,
+            Casing::UpperSnake => CasingSeparator::Underscore,
+            Casing::UpperKebab => CasingSeparator::Hyphen,
+        }
+    }
+}
+
+impl From<Option<Casing>> for CasingSeparator {
+    fn from(value: Option<Casing>) -> Self {
+        if let Some(v) = value {
+            v.into()
+        } else {
+            CasingSeparator::None
+        }
+    }
+}

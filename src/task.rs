@@ -1,7 +1,7 @@
 use std::io::{BufRead, Write};
 
 use crate::{
-    casing::Casing,
+    casing::{Casing, CasingSeparator},
     record::Records,
     task::offset::Offset,
     token::{Token, TokenError},
@@ -13,6 +13,7 @@ mod offset;
 pub struct Task {
     candidate: Token,
     rename: Token,
+    preferred_casing_separator: CasingSeparator,
 }
 
 impl Task {
@@ -20,6 +21,7 @@ impl Task {
         Self {
             candidate: candidate.parse().unwrap(),
             rename: rename.parse().unwrap(),
+            preferred_casing_separator: Casing::detect_casing(rename).into(),
         }
     }
 
@@ -89,8 +91,16 @@ impl Task {
                 self.rename
                     .try_to_casing(&record.casing)
                     .unwrap_or_else(|err| match err {
-                        TokenError::AmbiguousToLowerCase => self.rename.to_camel_case(),
-                        TokenError::AmbiguousToUpperCase => self.rename.to_upper_snake_case(),
+                        TokenError::AmbiguousToLowerCase => match self.preferred_casing_separator {
+                            CasingSeparator::None => self.rename.to_camel_case(),
+                            CasingSeparator::Underscore => self.rename.to_snake_case(),
+                            CasingSeparator::Hyphen => self.rename.to_kebab_case(),
+                        },
+                        TokenError::AmbiguousToUpperCase => match self.preferred_casing_separator {
+                            CasingSeparator::None => self.rename.to_upper_snake_case(),
+                            CasingSeparator::Underscore => self.rename.to_upper_snake_case(),
+                            CasingSeparator::Hyphen => self.rename.to_upper_kebab_case(),
+                        },
                     });
 
             let start = offset.apply(record.pos);
@@ -231,5 +241,20 @@ mod test_task {
 
         let assert = task_test_creator(candidate, rename);
         assert(input, expected);
+    }
+
+    #[test]
+    fn test_preferred_casing() {
+        let assert = task_test_creator("result", "parsedTransaction");
+        assert(
+            "result | Result | RESULT | rEsult",
+            "parsedTransaction | ParsedTransaction | PARSED_TRANSACTION | rEsult",
+        );
+
+        let assert = task_test_creator("result", "parsed-transaction");
+        assert(
+            "result | Result | RESULT | rEsult",
+            "parsed-transaction | ParsedTransaction | PARSED-TRANSACTION | rEsult",
+        );
     }
 }
