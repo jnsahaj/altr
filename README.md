@@ -1,15 +1,16 @@
 # Altr: Smart CLI Refactoring Tool
 
-## Description
-Altr, a command-line tool, specializes in seamless code refactoring while preserving your chosen case styling.
+## Overview
+Altr is a robust command-line refactoring tool designed to effortlessly enhance your codebase while maintaining your preferred casing styles.
 
-## Usage
-Unlock the potential of Altr with the command:
+## How to Use
+Execute Altr with the following command:
 ```bash
 altr <termToReplace> <replacementTerm> -f <path>
 ```
+
 ## Example
-Consider a file, `user.js`, where the "user" needs be renamed to "myImportantUser"
+Let's take a look at a practical scenario using a file named `user.js`, where we want to rename "user" to "myImportantUser".
 ```js
 const user = new User("Adam");
 
@@ -17,14 +18,16 @@ function getUserName(user: User) {
     return user.name;
 }
 
-// Setting new name for the USER
+// Updating the name for the USER
 function setUserName(name: string) {
     user.name = name; 
 }
 ```
+Executing the command:
 ```bash
 altr user myImportantUser -f user.js
 ```
+Results in the following updated file:
 ```js
 const myImportantUser = new MyImportantUser("Adam");
 
@@ -32,17 +35,17 @@ function getMyImportantUserName(myImportantUser: MyImportantUser) {
     return myImportantUser.name;
 }
 
-// Setting new name for the MY_IMPORTANT_USER
+// Updating the name for the MY_IMPORTANT_USER
 function setMyImportantUserName(name: string) {
     myImportantUser.name = name; 
 }
 ```
 
-Note that Altr changed the values while keeping into account the casing styles of both the pattern to be replaced and the pattern specified to be renamed
-If instead we were to run
+Altr intelligently handles the replacement, considering the casing styles of both the original term and the specified replacement term. For instance, if we run:
 ```bash
 altr user my-important-user -f user.js
 ```
+The tool adjusts the file accordingly:
 ```js
 const my-important-user = new MyImportantUser("Adam");
 
@@ -50,15 +53,15 @@ function getMyImportantUserName(my-important-user: MyImportantUser) {
     return my-important-user.name;
 }
 
-// Setting new name for the MY-IMPORTANT-USER
+// Updating the name for the MY-IMPORTANT-USER
 function setMyImportantUserName(name: string) {
     my-important-user.name = name; 
 }
 ```
-Note that the casing of the term "user" is not sufficient to determine its conversion into "my-important-user", hence the replacementTerm's casing is taken into account. Although, "User" can be determined to be PascalCase, hence that is correctly inferred
+Notice how Altr adapts to the casing requirements of the replacement term.
 
 ## Installation
-Install using cargo
+Altr is easily installed using cargo:
 ```bash
 cargo install altr
 ```
