@@ -216,7 +216,7 @@ mod test_task {
             x_1 + y_1 = z_1;
         ";
         let expected = r"
-            pointX + y_1 = z_1;
+            point_x + y_1 = z_1;
         ";
 
         assert_expected(candidate, rename, input, expected);

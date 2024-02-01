@@ -12,27 +12,41 @@ pub enum Casing {
 
 impl Casing {
     pub fn detect_casing(s: &str) -> Result<Casing, String> {
-        if s.chars().all(|c| c.is_lowercase()) {
+        if s.chars().all(|c| c.is_numeric()) {
+            return Err(format!("All numeric values are not allowed! got: {}", s));
+        }
+
+        if s.chars().all(|c| c.is_lowercase() || c.is_numeric()) {
             return Ok(Casing::Lower);
         }
 
-        if s.chars().all(|c| c.is_uppercase()) {
+        if s.chars().all(|c| c.is_uppercase() || c.is_numeric()) {
             return Ok(Casing::Upper);
         }
 
-        if s.contains('_') && s.chars().all(|c| c == '_' || c.is_lowercase()) {
+        if s.contains('_')
+            && s.chars()
+                .all(|c| c == '_' || c.is_lowercase() || c.is_numeric())
+        {
             return Ok(Casing::Snake);
         }
 
-        if s.contains('-') && s.chars().all(|c| c == '-' || c.is_lowercase()) {
+        if s.contains('-')
+            && s.chars()
+                .all(|c| c == '-' || c.is_lowercase() || c.is_numeric())
+        {
             return Ok(Casing::Kebab);
         }
 
-        if s.chars().all(|c| c.is_uppercase() || c == '_') {
+        if s.chars()
+            .all(|c| c.is_uppercase() || c == '_' || c.is_numeric())
+        {
             return Ok(Casing::UpperSnake);
         }
 
-        if s.chars().all(|c| c.is_uppercase() || c == '-') {
+        if s.chars()
+            .all(|c| c.is_uppercase() || c == '-' || c.is_numeric())
+        {
             return Ok(Casing::UpperKebab);
         }
 
