@@ -1,6 +1,6 @@
 use std::{
     fs::{File, OpenOptions},
-    io::{self, BufRead, BufReader},
+    io::{self, BufRead, BufReader, Read, Write},
 };
 
 use clap::Parser;
@@ -30,16 +30,17 @@ pub fn run() -> Result<(), clap::Error> {
     let cli = Cli::parse();
     dbg!(&cli);
 
-    let mut task = Task::build(&cli.candidate, &cli.rename).unwrap();
+    let mut buf = String::new();
+    let _ = get_file_reader(&cli.file)?.read_to_string(&mut buf);
 
-    let mut records = task.generate_records(get_file_reader(&cli.file)?)?;
-    let buf = task.process_records(&mut records, &mut get_file_reader(&cli.file)?);
+    let mut task = Task::build(&cli.candidate, &cli.rename, &buf).unwrap();
+
+    let mut records = task.generate_records()?;
+    let processed_buf = task.process_records(&mut records);
 
     let mut writer = get_file_writer(&cli.file)?;
-
-    writer.set_len(buf.len() as u64)?;
-
-    Task::write(&mut writer, &buf)?;
+    writer.set_len(processed_buf.len() as u64)?;
+    writer.write_all(processed_buf.as_bytes())?;
 
     Ok(())
 }

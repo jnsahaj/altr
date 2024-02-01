@@ -1,4 +1,4 @@
-use std::io::{self, BufRead, Write};
+use std::io;
 
 use crate::{
     casing::{Casing, CasingSeparator},
@@ -10,22 +10,24 @@ use crate::{
 mod offset;
 
 #[derive(Debug)]
-pub struct Task {
+pub struct Task<'a> {
     candidate: Token,
     rename: Token,
     preferred_casing_separator: CasingSeparator,
+    buf: &'a str,
 }
 
-impl Task {
-    pub fn build(candidate: &str, rename: &str) -> Result<Self, String> {
+impl<'a> Task<'a> {
+    pub fn build(candidate: &str, rename: &str, buf: &'a str) -> Result<Self, String> {
         Ok(Self {
             candidate: candidate.parse()?,
             rename: rename.parse()?,
             preferred_casing_separator: Casing::detect_casing(rename)?.into(),
+            buf,
         })
     }
 
-    pub fn generate_records(&mut self, reader: impl BufRead) -> Result<Records, io::Error> {
+    pub fn generate_records(&mut self) -> Result<Records, io::Error> {
         let mut records = Records::new();
 
         // collection of casings to operate on
@@ -60,9 +62,7 @@ impl Task {
 
         let mut line_offset: usize = 0;
 
-        for line in reader.lines() {
-            let line = line?;
-
+        for line in self.buf.lines() {
             for (casing, pattern) in casing_with_candidates.iter() {
                 let matches = line.match_indices(*pattern);
 
@@ -78,9 +78,8 @@ impl Task {
         Ok(records)
     }
 
-    pub fn process_records(&mut self, records: &mut Records, reader: &mut impl BufRead) -> String {
-        let mut buf = String::new();
-        let _ = reader.read_to_string(&mut buf);
+    pub fn process_records(&mut self, records: &mut Records) -> String {
+        let mut buf = self.buf.to_string();
 
         dbg!(&records);
 
@@ -113,52 +112,20 @@ impl Task {
 
         buf
     }
-
-    pub fn write(writer: &mut impl Write, value: &str) -> Result<(), io::Error> {
-        writer.write_all(value.as_bytes())
-    }
 }
 
 #[cfg(test)]
 mod test_task {
-    use std::io::{BufReader, Cursor, Read};
 
     use super::*;
 
-    fn get_reader(input: &str) -> impl BufRead {
-        let cursor: Cursor<Vec<u8>> = Cursor::new(input.into());
-        BufReader::new(cursor)
-    }
+    fn assert_expected<'a>(candidate: &'a str, rename: &'a str, input: &'a str, expected: &'a str) {
+        let mut task = Task::build(candidate, rename, input).unwrap();
 
-    fn get_writer(capacity: usize) -> Cursor<Vec<u8>> {
-        Cursor::new(Vec::with_capacity(capacity))
-    }
+        let mut records = task.generate_records().unwrap();
+        let result = task.process_records(&mut records);
 
-    fn task_test_creator<'a>(candidate: &'a str, rename: &'a str) -> impl FnOnce(&'a str, &'a str) {
-        let mut task = Task::build(candidate, rename).unwrap();
-
-        let f = move |input: &str, expected: &str| {
-            let mut records = task.generate_records(get_reader(input)).unwrap();
-            let result = task.process_records(&mut records, &mut get_reader(input));
-
-            let mut writer = get_writer(result.len());
-            let _ = Task::write(&mut writer, &result);
-
-            let s = writer
-                .get_ref()
-                .bytes()
-                .map(|v| v.unwrap())
-                .collect::<Vec<u8>>();
-
-            assert_eq!(
-                s,
-                expected.as_bytes(),
-                "Result: {}",
-                String::from_utf8_lossy(&s)
-            );
-        };
-
-        f
+        assert_eq!(result, expected, "Result: {}", result);
     }
 
     #[test]
@@ -169,8 +136,7 @@ mod test_task {
         let input = r"user User USER";
         let expected = r"supplyUser SupplyUser SUPPLY_USER";
 
-        let assert = task_test_creator(candidate, rename);
-        assert(input, expected);
+        assert_expected(candidate, rename, input, expected);
     }
 
     #[test]
@@ -204,11 +170,10 @@ mod test_task {
                 }
         "#;
 
-        let assert = task_test_creator(candidate, rename);
-        assert(input, expected);
+        assert_expected(candidate, rename, input, expected);
 
-        let reverse_assert = task_test_creator(rename, candidate);
-        reverse_assert(expected, input);
+        // testing reversal
+        assert_expected(rename, candidate, expected, input);
     }
 
     #[test]
@@ -239,26 +204,28 @@ mod test_task {
             uppersnake: MY_NEW_USER
         ";
 
-        let assert = task_test_creator(candidate, rename);
-        assert(input, expected);
+        assert_expected(candidate, rename, input, expected);
     }
 
     #[test]
     fn test_preferred_casing() {
-        let assert = task_test_creator("result", "parsedTransaction");
-        assert(
+        assert_expected(
+            "result",
+            "parsedTransaction",
             "result | Result | RESULT | rEsult",
             "parsedTransaction | ParsedTransaction | PARSED_TRANSACTION | rEsult",
         );
 
-        let assert = task_test_creator("result", "parsed-transaction");
-        assert(
+        assert_expected(
+            "result",
+            "parsed-transaction",
             "result | Result | RESULT | rEsult",
             "parsed-transaction | ParsedTransaction | PARSED-TRANSACTION | rEsult",
         );
 
-        let assert = task_test_creator("result", "parsed_transaction");
-        assert(
+        assert_expected(
+            "result",
+            "parsed_transaction",
             "result | Result | RESULT | rEsult",
             "parsed_transaction | ParsedTransaction | PARSED_TRANSACTION | rEsult",
         );
