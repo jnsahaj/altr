@@ -29,7 +29,7 @@ fn get_file_writer(path: &str) -> Result<File, io::Error> {
     Ok(file)
 }
 
-pub fn run() -> Result<(), clap::Error> {
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     let mut buf = String::new();
@@ -39,7 +39,7 @@ pub fn run() -> Result<(), clap::Error> {
         _ => get_file_reader(&cli.input)?.read_to_string(&mut buf),
     };
 
-    let mut task = Task::build(&cli.candidate, &cli.rename, &buf).unwrap();
+    let mut task = Task::build(&cli.candidate, &cli.rename, &buf)?;
 
     let mut records = task.generate_records()?;
     let processed_buf = task.process_records(&mut records);
