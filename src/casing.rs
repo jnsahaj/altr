@@ -69,28 +69,28 @@ mod test_casing {
 
     #[test]
     fn lower_case() {
-        let inputs = vec!["lowercase", "keys", "inputs"];
+        let inputs = vec!["lowercase", "keys", "inputs", "num123"];
 
         assert_inputs_casing(&inputs, Casing::Lower);
     }
 
     #[test]
     fn upper_case() {
-        let inputs = vec!["UPPERCASE", "KEYS", "INPUTS"];
+        let inputs = vec!["UPPERCASE", "KEYS", "INPUTS", "NUM123"];
 
         assert_inputs_casing(&inputs, Casing::Upper);
     }
 
     #[test]
     fn snake_case() {
-        let inputs = vec!["snake_case", "with_underscore", "multiple_words"];
+        let inputs = vec!["snake_case", "with_underscore", "multiple_words", "num_123"];
 
         assert_inputs_casing(&inputs, Casing::Snake);
     }
 
     #[test]
     fn kebab_case() {
-        let inputs = vec!["kebab-case", "with-hyphen", "multiple-words"];
+        let inputs = vec!["kebab-case", "with-hyphen", "multiple-words", "num-123"];
 
         assert_inputs_casing(&inputs, Casing::Kebab);
     }
@@ -104,28 +104,38 @@ mod test_casing {
 
     #[test]
     fn pascal_case() {
-        let inputs = vec!["PascalCase", "WithMixedCase", "MultipleWords"];
+        let inputs = vec!["PascalCase", "WithMixedCase", "MultipleWords", "Num123"];
 
         assert_inputs_casing(&inputs, Casing::Pascal);
     }
 
     #[test]
     fn upper_snake_case() {
-        let inputs = vec!["UPPER_SNAKE_CASE", "WITH_UNDERSCORE", "MULTIPLE_WORDS"];
+        let inputs = vec![
+            "UPPER_SNAKE_CASE",
+            "WITH_UNDERSCORE",
+            "MULTIPLE_WORDS",
+            "NUM_123",
+        ];
 
         assert_inputs_casing(&inputs, Casing::UpperSnake);
     }
 
     #[test]
     fn upper_kebab_case() {
-        let inputs = vec!["UPPER-KEBAB-CASE", "WITH-HYPHEN", "MULTIPLE-WORDS"];
+        let inputs = vec![
+            "UPPER-KEBAB-CASE",
+            "WITH-HYPHEN",
+            "MULTIPLE-WORDS",
+            "NUM-123",
+        ];
 
         assert_inputs_casing(&inputs, Casing::UpperKebab);
     }
 
     #[test]
     fn invalid_case() {
-        let inputs = vec!["InVA-lid", "INVa_lid", "in-Va_lid", "in-va_lid"];
+        let inputs = vec!["InVA-lid", "INVa_lid", "in-Va_lid", "in-va_lid", "123"];
 
         assert!(inputs.iter().all(|i| Casing::detect_casing(i).is_err()));
     }

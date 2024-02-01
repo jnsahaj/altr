@@ -208,6 +208,21 @@ mod test_task {
     }
 
     #[test]
+    fn test_4() {
+        let candidate = "x_1";
+        let rename = "pointX";
+
+        let input = r"
+            x_1 + y_1 = z_1;
+        ";
+        let expected = r"
+            pointX + y_1 = z_1;
+        ";
+
+        assert_expected(candidate, rename, input, expected);
+    }
+
+    #[test]
     fn test_preferred_casing() {
         assert_expected(
             "result",
