@@ -12,8 +12,11 @@ struct Cli {
     candidate: String,
     rename: String,
 
-    #[arg(short, long, default_value = "-")]
-    file: String,
+    #[arg(short = 'f', long, default_value = "-")]
+    input: String,
+
+    #[arg(short, long)]
+    output: Option<String>,
 }
 
 fn get_file_reader(path: &str) -> Result<impl BufRead, io::Error> {
@@ -32,9 +35,9 @@ pub fn run() -> Result<(), clap::Error> {
 
     let mut buf = String::new();
 
-    let _ = match cli.file.as_ref() {
+    let _ = match cli.input.as_ref() {
         "-" => io::stdin().read_to_string(&mut buf),
-        _ => get_file_reader(&cli.file)?.read_to_string(&mut buf),
+        _ => get_file_reader(&cli.input)?.read_to_string(&mut buf),
     };
 
     let mut task = Task::build(&cli.candidate, &cli.rename, &buf).unwrap();
@@ -42,12 +45,14 @@ pub fn run() -> Result<(), clap::Error> {
     let mut records = task.generate_records()?;
     let processed_buf = task.process_records(&mut records);
 
-    match cli.file.as_ref() {
+    let output = cli.output.unwrap_or(cli.input);
+
+    match output.as_ref() {
         "-" => {
             io::stdout().write_all(processed_buf.as_bytes())?;
         }
         _ => {
-            let mut writer = get_file_writer(&cli.file)?;
+            let mut writer = get_file_writer(&output)?;
             writer.set_len(processed_buf.len() as u64)?;
             writer.write_all(processed_buf.as_bytes())?;
         }
