@@ -12,7 +12,7 @@ struct Cli {
     candidate: String,
     rename: String,
 
-    #[arg(short, long)]
+    #[arg(short, long, default_value = "-")]
     file: String,
 }
 
@@ -31,16 +31,27 @@ pub fn run() -> Result<(), clap::Error> {
     dbg!(&cli);
 
     let mut buf = String::new();
-    let _ = get_file_reader(&cli.file)?.read_to_string(&mut buf);
+
+    let _ = match cli.file.as_ref() {
+        "-" => io::stdin().read_to_string(&mut buf),
+        _ => get_file_reader(&cli.file)?.read_to_string(&mut buf),
+    };
 
     let mut task = Task::build(&cli.candidate, &cli.rename, &buf).unwrap();
 
     let mut records = task.generate_records()?;
     let processed_buf = task.process_records(&mut records);
 
-    let mut writer = get_file_writer(&cli.file)?;
-    writer.set_len(processed_buf.len() as u64)?;
-    writer.write_all(processed_buf.as_bytes())?;
+    match cli.file.as_ref() {
+        "-" => {
+            io::stdout().write_all(processed_buf.as_bytes())?;
+        }
+        _ => {
+            let mut writer = get_file_writer(&cli.file)?;
+            writer.set_len(processed_buf.len() as u64)?;
+            writer.write_all(processed_buf.as_bytes())?;
+        }
+    };
 
     Ok(())
 }
