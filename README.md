@@ -60,6 +60,18 @@ function setMyImportantUserName(name: string) {
 ```
 Notice how Altr adapts to the casing requirements of the replacement term.
 
+## IO Support
+Altr supports taking in input from stdin and passing it to stdout
+```bash
+$ echo "user" | altr user myImportantUser
+$ myImportantUser
+```
+You can also specify the output location
+```bash
+altr user myImportantUser -f user.js -o peek.js
+```
+You can use "-" as path to indicate stdin or stdout as well
+
 ## Installation
 Altr is easily installed using cargo:
 ```bash
