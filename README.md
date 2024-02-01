@@ -10,52 +10,52 @@ altr <termToReplace> <replacementTerm> -f <path>
 ```
 
 ## Example
-Let's take a look at a practical scenario using a file named `user.js`, where we want to rename "user" to "myImportantUser".
+Let's take a look at a practical scenario using a file named `programmer.js`, where we want to rename "programmer" to "rustProgrammer".
 ```js
-const user = new User("Adam");
+const programmer = new Programmer(Adam);
 
-function getUserName(user: User) {
-    return user.name;
+function getProgrammerName(programmer: Programmer) {
+    return programmer.name;
 }
 
-// Updating the name for the USER
-function setUserName(name: string) {
-    user.name = name; 
+// Updating the name for the PROGRAMMER
+function setProgrammerName(name: string) {
+    programmer.name = name; 
 }
 ```
 Executing the command:
 ```bash
-altr user myImportantUser -f user.js
+altr programmer rustProgrammer -f programmer.js
 ```
 Results in the following updated file:
 ```js
-const myImportantUser = new MyImportantUser("Adam");
+const rustProgrammer = new RustProgrammer(Adam);
 
-function getMyImportantUserName(myImportantUser: MyImportantUser) {
-    return myImportantUser.name;
+function getRustProgrammerName(rustProgrammer: RustProgrammer) {
+    return rustProgrammer.name;
 }
 
-// Updating the name for the MY_IMPORTANT_USER
-function setMyImportantUserName(name: string) {
-    myImportantUser.name = name; 
+// Updating the name for the RUST_PROGRAMMER
+function setRustProgrammerName(name: string) {
+    rustProgrammer.name = name; 
 }
 ```
 
 Altr intelligently handles the replacement, considering the casing styles of both the original term and the specified replacement term. For instance, if we run:
 ```bash
-altr user my-important-user -f user.js
+altr programmer rust_programmer -f programmer.js
 ```
 The tool adjusts the file accordingly:
 ```js
-const my-important-user = new MyImportantUser("Adam");
+const rust_programmer = new RustProgrammer(Adam);
 
-function getMyImportantUserName(my-important-user: MyImportantUser) {
-    return my-important-user.name;
+function getRustProgrammerName(rust_programmer: RustProgrammer) {
+    return rust_programmer.name;
 }
 
-// Updating the name for the MY-IMPORTANT-USER
-function setMyImportantUserName(name: string) {
-    my-important-user.name = name; 
+// Updating the name for the RUST_PROGRAMMER
+function setRustProgrammerName(name: string) {
+    rust_programmer.name = name; 
 }
 ```
 Notice how Altr adapts to the casing requirements of the replacement term.
@@ -63,12 +63,12 @@ Notice how Altr adapts to the casing requirements of the replacement term.
 ## IO Support
 Altr supports taking in input from stdin and passing it to stdout
 ```bash
-$ echo "user" | altr user myImportantUser
-$ myImportantUser
+$ echo "programmer" | altr programmer rust_programmer
+$ rust_programmer
 ```
 You can also specify the output location
 ```bash
-altr user myImportantUser -f user.js -o peek.js
+altr programmer rust_programmer -f programmer.js -o rust-programmer.js
 ```
 You can use "-" as path to indicate stdin or stdout as well
 
