@@ -31,7 +31,6 @@ fn get_file_writer(path: &str) -> Result<File, io::Error> {
 
 pub fn run() -> Result<(), clap::Error> {
     let cli = Cli::parse();
-    dbg!(&cli);
 
     let mut buf = String::new();
 

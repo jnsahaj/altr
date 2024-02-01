@@ -81,8 +81,6 @@ impl<'a> Task<'a> {
     pub fn process_records(&mut self, records: &mut Records) -> String {
         let mut buf = self.buf.to_string();
 
-        dbg!(&records);
-
         let mut offset = Offset::Pos(0);
 
         for (_, record) in records.iter() {
