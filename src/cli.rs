@@ -3,9 +3,9 @@ use std::{
     io::{self, BufRead, BufReader, Read, Write},
 };
 
-use clap::Parser;
+use altr::task::Task;
 
-use crate::task::Task;
+use clap::Parser;
 
 #[derive(Parser, Debug)]
 struct Cli {

@@ -1,12 +1,6 @@
 use std::process;
 
-mod casing;
-mod cli;
-mod record;
-mod task;
-mod token;
-
-const SEPARATOR: char = ',';
+pub mod cli;
 
 fn main() {
     if let Err(e) = cli::run() {
