@@ -49,10 +49,9 @@ impl Token {
             if ch.is_uppercase() {
                 if i == 0 {
                     return None;
-                } else {
-                    result.push(SEPARATOR);
-                    result.push(ch.to_ascii_lowercase());
                 }
+                result.push(SEPARATOR);
+                result.push(ch.to_ascii_lowercase());
             } else {
                 result.push(ch);
             }
