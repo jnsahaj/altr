@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::{casing::Casing, SEPARATOR};
 
 #[derive(Debug)]
@@ -25,7 +23,7 @@ impl Token {
         }
     }
 
-    pub fn from_casing(casing: &Casing, input: &str) -> Result<Self, String> {
+    pub fn from_casing(casing: &Casing, input: &str) -> crate::Result<Self> {
         match casing {
             Casing::Camel => Token::from_camel_case(input),
             Casing::Pascal => Token::from_pascal_case(input),
@@ -36,10 +34,13 @@ impl Token {
             Casing::UpperSnake => Token::from_upper_snake_case(input),
             Casing::UpperKebab => Token::from_upper_kebab_case(input),
         }
-        .ok_or(format!(
-            "Failed to obtain token from specified casing: {:?} and input: {}",
-            casing, input
-        ))
+        .ok_or(
+            format!(
+                "Failed to obtain token from specified casing: {:?} and input: {}",
+                casing, input
+            )
+            .into(),
+        )
     }
 
     pub fn from_camel_case(input: &str) -> Option<Self> {
@@ -168,12 +169,8 @@ impl Token {
     pub fn to_upper_kebab_case(&self) -> String {
         self.to_kebab_case().to_ascii_uppercase()
     }
-}
 
-impl FromStr for Token {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    pub fn from_str(s: &str) -> crate::Result<Self> {
         Token::from_casing(&Casing::detect_casing(s)?, s)
     }
 }

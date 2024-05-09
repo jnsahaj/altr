@@ -1,3 +1,5 @@
+use crate::Result;
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Casing {
     Camel,
@@ -11,9 +13,9 @@ pub enum Casing {
 }
 
 impl Casing {
-    pub fn detect_casing(s: &str) -> Result<Casing, String> {
+    pub fn detect_casing(s: &str) -> Result<Casing> {
         if s.chars().all(|c| c.is_numeric()) {
-            return Err(format!("All numeric values are not allowed! got: {}", s));
+            return Err(format!("All numeric values are not allowed").into());
         }
 
         if s.chars().all(|c| c.is_lowercase() || c.is_numeric()) {
@@ -67,7 +69,7 @@ impl Casing {
             return Ok(Casing::Pascal);
         }
 
-        Err(format!("Failed to detect casing for {}", s))
+        Err(String::from("").into())
     }
 }
 

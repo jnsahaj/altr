@@ -1,10 +1,9 @@
-use std::io;
-
 use crate::{
     casing::{Casing, CasingSeparator},
     record::Records,
     task::offset::Offset,
     token::{Token, TokenError},
+    Error, Result,
 };
 
 mod offset;
@@ -18,16 +17,34 @@ pub struct Task<'a> {
 }
 
 impl<'a> Task<'a> {
-    pub fn build(candidate: &str, rename: &str, buf: &'a str) -> Result<Self, String> {
+    pub fn build(candidate: &str, rename: &str, buf: &'a str) -> Result<Self> {
+        let candidate_err = |e: Error| {
+            let reason = match e {
+                Error::Custom(reason) => reason,
+                _ => String::from(""),
+            };
+
+            Error::CandidateCasing(reason)
+        };
+
+        let rename_err = |e: Error| {
+            let reason = match e {
+                Error::Custom(reason) => reason,
+                _ => String::from(""),
+            };
+
+            Error::RenameCasing(reason)
+        };
+
         Ok(Self {
-            candidate: candidate.parse()?,
-            rename: rename.parse()?,
+            candidate: Token::from_str(candidate).map_err(candidate_err)?,
+            rename: Token::from_str(rename).map_err(rename_err)?,
             preferred_casing_separator: Casing::detect_casing(rename)?.into(),
             buf,
         })
     }
 
-    pub fn generate_records(&mut self) -> Result<Records, io::Error> {
+    pub fn generate_records(&mut self) -> Records {
         let mut records = Records::new();
 
         // collection of casings to operate on
@@ -75,7 +92,7 @@ impl<'a> Task<'a> {
             line_offset += line.len() + 1; // + 1 accounts for the \n character
         }
 
-        Ok(records)
+        records
     }
 
     pub fn process_records(&mut self, records: &mut Records) -> String {
@@ -120,7 +137,7 @@ mod test_task {
     fn assert_expected<'a>(candidate: &'a str, rename: &'a str, input: &'a str, expected: &'a str) {
         let mut task = Task::build(candidate, rename, input).unwrap();
 
-        let mut records = task.generate_records().unwrap();
+        let mut records = task.generate_records();
         let result = task.process_records(&mut records);
 
         assert_eq!(result, expected, "Result: {}", result);

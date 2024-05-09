@@ -4,6 +4,7 @@ use std::{
 };
 
 use altr::task::Task;
+use altr::Result;
 
 use clap::Parser;
 
@@ -19,17 +20,17 @@ struct Cli {
     output: Option<String>,
 }
 
-fn get_file_reader(path: &str) -> Result<impl BufRead, io::Error> {
+fn get_file_reader(path: &str) -> Result<impl BufRead> {
     let file = OpenOptions::new().read(true).open(path)?;
     Ok(BufReader::new(file))
 }
 
-fn get_file_writer(path: &str) -> Result<File, io::Error> {
+fn get_file_writer(path: &str) -> Result<File> {
     let file = OpenOptions::new().write(true).open(path)?;
     Ok(file)
 }
 
-pub fn run() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run() -> Result<()> {
     let cli = Cli::parse();
 
     let mut buf = String::new();
@@ -41,7 +42,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut task = Task::build(&cli.candidate, &cli.rename, &buf)?;
 
-    let mut records = task.generate_records()?;
+    let mut records = task.generate_records();
     let processed_buf = task.process_records(&mut records);
 
     let output = cli.output.unwrap_or(cli.input);
