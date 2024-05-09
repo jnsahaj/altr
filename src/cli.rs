@@ -43,7 +43,7 @@ pub fn run() -> Result<()> {
     let mut task = Task::build(&cli.candidate, &cli.rename, &buf)?;
 
     let mut records = task.generate_records();
-    let processed_buf = task.process_records(&mut records);
+    let (processed_buf, _) = task.process_records(&mut records);
 
     let output = cli.output.unwrap_or(cli.input);
 

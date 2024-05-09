@@ -95,10 +95,11 @@ impl<'a> Task<'a> {
         records
     }
 
-    pub fn process_records(&mut self, records: &mut Records) -> String {
+    pub fn process_records(&mut self, records: &mut Records) -> (String, Records) {
         let mut buf = self.buf.to_string();
 
         let mut offset = Offset::Pos(0);
+        let mut processed_records = Records::new();
 
         for (_, record) in records.iter() {
             let rename =
@@ -121,11 +122,12 @@ impl<'a> Task<'a> {
             let end = offset.apply(record.pos + record.len);
 
             buf.replace_range(start..end, &rename);
+            let _ = processed_records.try_insert(start, rename.len(), record.casing.clone());
 
             offset = Offset::add(offset, Offset::from_diff(rename.len(), record.len));
         }
 
-        buf
+        (buf, processed_records)
     }
 }
 
@@ -138,7 +140,7 @@ mod test_task {
         let mut task = Task::build(candidate, rename, input).unwrap();
 
         let mut records = task.generate_records();
-        let result = task.process_records(&mut records);
+        let (result, _) = task.process_records(&mut records);
 
         assert_eq!(result, expected, "Result: {}", result);
     }
