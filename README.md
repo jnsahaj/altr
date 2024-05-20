@@ -2,6 +2,9 @@
 
 ## Overview
 Altr is a robust command-line refactoring tool designed to effortlessly enhance your codebase while maintaining your preferred casing styles.
+<br />
+### Try it out on your browser: https://altr-5oz.pages.dev 🦀
+<br />
 
 ## How to Use
 Execute Altr with the following command:
